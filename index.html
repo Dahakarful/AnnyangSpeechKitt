@@ -1,43 +1,91 @@
-<h1>Vocal WEB</h1>
-<span id="skitt-listening-text__recognized-sentence">What the user said</span>
+<link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+
+<h2>Vous avez demandé:</h2>
+<font face="Roboto Mono">
+    <span id="skitt-listening-text__recognized-sentence"></span>
+</font>
+<h2>La réponse est:</h2>
+<font face="Roboto Mono">
+    <span id="response"></span>
+</font>
 <script src="//cdnjs.cloudflare.com/ajax/libs/annyang/2.6.0/annyang.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
     crossorigin="anonymous"></script>
 <script src="./speechkitt.js"></script>
 
 <script>
+    var msg = new SpeechSynthesisUtterance();
+    var voices = window.speechSynthesis.getVoices();
+    msg.voice = voices[2]; // Note: some voices don't support altering params
+    // msg.voice = voices.filter(function(voice) { return voice.name == 'Google FR Male'; })[0];
+    msg.voiceURI = 'native';
+    msg.volume = 1; // 0 to 1
+    msg.rate = 0.8 // 0.1 to 10
+    msg.pitch = 0; //0 to 2
+    msg.lang = 'fr-FR';
+    // msg.text = 'Bonjour, je suis wally, votre assistant bancaire personnelle';
+
+    var yes = false;
+
     if (annyang) {
 
         annyang.debug(true);
         annyang.setLanguage("fr-FR");
 
-        var showFlickr = function (tag) {
-            console.log('Batman');
-            var url = 'http://api.flickr.com/services/rest/?tags=' + tag;
-            $.getJSON(url);
+        var showSold = function () {
+            msg.text = 'Votre solde actuel est de 2556,54 €';
+            speechSynthesis.speak(msg);
         };
 
-        var calculateStats = function (month) {
-            $('#stats').text('Statistics for ' + month);
-        };
+        var isYes = function () {
+            yes = true;
+        }
 
-        var greeting = function () {
-            console.log("HELLO");
-            $('#greeting').text('Hello!');
-        };
+        var virement = function (nombre, qui) {
+            console.log(nombre);
+            console.log(qui);
+            annyang.abort();
+            msg.text = "Êtes-vous sûr de faire ce virement ?";
+            speechSynthesis.speak(msg);
+            var promise = new Promise(function (resolve, reject) {
+                // annyang.resume();
+                // console.log($('#response').text());
+                // resolve($('#response').text());
+                setTimeout(function () {
+                    console.log("ok");
+                    var recognition = new webkitSpeechRecognition();
+                    recognition.start(); //start it
+                    recognition.onend = function () { //a function to restart it when it stops
+                        recognition.start();
+                    }
+                    recognition.onresult = function (event) {
+                        console.log(event);
+                        return event.results[0][0].transcript; //get what was heard    
+                    };
+                    console.log(recognition.onresult());
+                    resolve(recognition.onresult());
+                }, 5000);
+            });
+            promise.then(function (value) {
+                console.log(value);
+                console.log("then");
+                if (value == "oui") {
+                    msg.text = 'Votre virement de ' + nombre + ' € a bien été envoyé à ' + qui;
+                    speechSynthesis.speak(msg);
+                    $('#response').text('Votre virement de ' + nombre + ' € a bien été envoyé à ' + qui);
+                } else {
+                    msg.text = "Vous avez annulé votre virement !";
+                    speechSynthesis.speak(msg);
+                    $('#response').text("Vous avez annulé votre virement !");
+                }
+                annyang.start();
+            });
+        }
 
         var commands = {
-            // annyang will capture anything after a splat (*) and pass it to the function.
-            // e.g. saying "Show me Batman and Robin" is the same as calling showFlickr('Batman and Robin');
-            'montre-moi *tag': showFlickr,
-
-            // A named variable is a one word variable, that can fit anywhere in your command.
-            // e.g. saying "calculate October stats" will call calculateStats('October');
-            //   'calculate :month stats': calculateStats,
-
-            // By defining a part of the following command as optional, annyang will respond to both:
-            // "say hello to my little friend" as well as "say hello friend"
-            'bonjour': greeting,
+            'wally montre-moi mon solde': showSold,
+            'wally faire un virement de :nombre € à :qui': virement,
+            'oui': isYes,
         };
 
         var tab = ['Montre-moi *', 'Bonjour'];
@@ -46,7 +94,7 @@
         annyang.addCommands(commands);
 
         // Start listening. You can call this here, or attach this call to an event, button, etc.
-        annyang.start();
+        // annyang.start();
 
         annyang.addCallback('soundstart', function () {
             console.log('sound detected');
@@ -59,9 +107,9 @@
         SpeechKITT.annyang();
         SpeechKITT.setStartCommand(annyang.start);
         SpeechKITT.setToggleLabelText("Comment puis-je vous aider ?");
-        SpeechKITT.setInstructionsText("Essayer les commandes suivantes...");
+        SpeechKITT.setInstructionsText("OK !");
         SpeechKITT.displayRecognizedSentence(true);
-        SpeechKITT.setSampleCommands(tab);
+        // SpeechKITT.setSampleCommands(tab);
 
         // Define a stylesheet for KITT to use
         SpeechKITT.setStylesheet('//cdnjs.cloudflare.com/ajax/libs/SpeechKITT/0.3.0/themes/flat-concrete.css');
@@ -69,4 +117,6 @@
         // Render KITT's interface
         SpeechKITT.vroom();
     }
+
+    speechSynthesis.speak(msg);
 </script>
