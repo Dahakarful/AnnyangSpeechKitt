@@ -1,0 +1,72 @@
+<h1>Vocal WEB</h1>
+<span id="skitt-listening-text__recognized-sentence">What the user said</span>
+<script src="//cdnjs.cloudflare.com/ajax/libs/annyang/2.6.0/annyang.min.js"></script>
+<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+    crossorigin="anonymous"></script>
+<script src="./speechkitt.js"></script>
+
+<script>
+    if (annyang) {
+
+        annyang.debug(true);
+        annyang.setLanguage("fr-FR");
+
+        var showFlickr = function (tag) {
+            console.log('Batman');
+            var url = 'http://api.flickr.com/services/rest/?tags=' + tag;
+            $.getJSON(url);
+        };
+
+        var calculateStats = function (month) {
+            $('#stats').text('Statistics for ' + month);
+        };
+
+        var greeting = function () {
+            console.log("HELLO");
+            $('#greeting').text('Hello!');
+        };
+
+        var commands = {
+            // annyang will capture anything after a splat (*) and pass it to the function.
+            // e.g. saying "Show me Batman and Robin" is the same as calling showFlickr('Batman and Robin');
+            'montre-moi *tag': showFlickr,
+
+            // A named variable is a one word variable, that can fit anywhere in your command.
+            // e.g. saying "calculate October stats" will call calculateStats('October');
+            //   'calculate :month stats': calculateStats,
+
+            // By defining a part of the following command as optional, annyang will respond to both:
+            // "say hello to my little friend" as well as "say hello friend"
+            'bonjour': greeting,
+        };
+
+        var tab = ['Montre-moi *', 'Bonjour'];
+
+        // Add our commands to annyang
+        annyang.addCommands(commands);
+
+        // Start listening. You can call this here, or attach this call to an event, button, etc.
+        annyang.start();
+
+        annyang.addCallback('soundstart', function () {
+            console.log('sound detected');
+        });
+
+        annyang.addCallback('result', function () {
+            console.log('sound stopped');
+        });
+
+        SpeechKITT.annyang();
+        SpeechKITT.setStartCommand(annyang.start);
+        SpeechKITT.setToggleLabelText("Comment puis-je vous aider ?");
+        SpeechKITT.setInstructionsText("Essayer les commandes suivantes...");
+        SpeechKITT.displayRecognizedSentence(true);
+        SpeechKITT.setSampleCommands(tab);
+
+        // Define a stylesheet for KITT to use
+        SpeechKITT.setStylesheet('//cdnjs.cloudflare.com/ajax/libs/SpeechKITT/0.3.0/themes/flat-concrete.css');
+
+        // Render KITT's interface
+        SpeechKITT.vroom();
+    }
+</script>
