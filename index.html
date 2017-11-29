@@ -59,11 +59,20 @@
                     $('#response').text("Vous avez annulé votre virement !");
                 }
             });
+        };
+
+        var emprunt = function (montant, mois) {
+            var res = (montant * 1.05) / mois;
+            msg.text = "Dans votre banque actuelle le taux est de 5%, pour " + mois + " mois vous aurez à payer un montant de res par mois";
+            speechSynthesis.speak(msg);
         }
+
+
 
         var commands = {
             'wally montre-moi mon solde': showSold,
-            'faire un virement de :nombre € à :qui': virement,
+            'wally faire un virement de :nombre € à :qui': virement,
+            'wally quels sont les mensualités pour un montant de :montant € pour :mois': emprunt,
         };
 
         var tab = ['Montre-moi *', 'Bonjour'];
@@ -82,6 +91,7 @@
             console.log('sound stopped');
         });
 
+        annyang.start();
         SpeechKITT.annyang();
         SpeechKITT.setStartCommand(annyang.start);
         SpeechKITT.setToggleLabelText("Comment puis-je vous aider ?");
