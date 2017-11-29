@@ -25,8 +25,6 @@
     msg.lang = 'fr-FR';
     // msg.text = 'Bonjour, je suis wally, votre assistant bancaire personnelle';
 
-    var yes = false;
-
     if (annyang) {
 
         annyang.debug(true);
@@ -37,39 +35,21 @@
             speechSynthesis.speak(msg);
         };
 
-        var isYes = function () {
-            yes = true;
-        }
-
         var virement = function (nombre, qui) {
             console.log(nombre);
             console.log(qui);
-            annyang.abort();
             msg.text = "Êtes-vous sûr de faire ce virement ?";
             speechSynthesis.speak(msg);
             var promise = new Promise(function (resolve, reject) {
-                // annyang.resume();
-                // console.log($('#response').text());
-                // resolve($('#response').text());
-                setTimeout(function () {
-                    console.log("ok");
-                    var recognition = new webkitSpeechRecognition();
-                    recognition.start(); //start it
-                    recognition.onend = function () { //a function to restart it when it stops
-                        recognition.start();
-                    }
-                    recognition.onresult = function (event) {
-                        console.log(event);
-                        return event.results[0][0].transcript; //get what was heard    
-                    };
-                    console.log(recognition.onresult());
-                    resolve(recognition.onresult());
-                }, 5000);
+                var result = annyang.addCallback('result', function (userSaid) {
+                    console.log("result:" + userSaid[0]);
+                    resolve(userSaid[0]);
+                });
             });
             promise.then(function (value) {
                 console.log(value);
                 console.log("then");
-                if (value == "oui") {
+                if (value.trim().toLowerCase() === "oui") {
                     msg.text = 'Votre virement de ' + nombre + ' € a bien été envoyé à ' + qui;
                     speechSynthesis.speak(msg);
                     $('#response').text('Votre virement de ' + nombre + ' € a bien été envoyé à ' + qui);
@@ -78,14 +58,12 @@
                     speechSynthesis.speak(msg);
                     $('#response').text("Vous avez annulé votre virement !");
                 }
-                annyang.start();
             });
         }
 
         var commands = {
             'wally montre-moi mon solde': showSold,
-            'wally faire un virement de :nombre € à :qui': virement,
-            'oui': isYes,
+            'faire un virement de :nombre € à :qui': virement,
         };
 
         var tab = ['Montre-moi *', 'Bonjour'];
