@@ -30,12 +30,16 @@
         annyang.debug(true);
         annyang.setLanguage("fr-FR");
 
+        var audio = new Audio('bip.mp3');
+
         var showSold = function () {
+            audio.play();
             msg.text = 'Votre solde actuel est de 2556,54 €';
             speechSynthesis.speak(msg);
         };
 
         var virement = function (nombre, qui) {
+            audio.play();
             console.log(nombre);
             console.log(qui);
             msg.text = "Êtes-vous sûr de faire ce virement ?";
