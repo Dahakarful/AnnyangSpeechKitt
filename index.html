@@ -31,6 +31,13 @@
         annyang.setLanguage("fr-FR");
 
         var audio = new Audio('bip.mp3');
+        var bloque = false;
+
+        var error = function () {
+            audio.play();
+            msg.text = "Je n'ai pas compris votre demande";
+            speechSynthesis.speak(msg);
+        }
 
         var showSold = function () {
             audio.play();
@@ -39,6 +46,7 @@
         };
 
         var virement = function (nombre, qui) {
+            annyang.removeCallback('resultNoMatch');
             audio.play();
             console.log(nombre);
             console.log(qui);
@@ -57,27 +65,123 @@
                     msg.text = 'Votre virement de ' + nombre + ' € a bien été envoyé à ' + qui;
                     speechSynthesis.speak(msg);
                     $('#response').text('Votre virement de ' + nombre + ' € a bien été envoyé à ' + qui);
+                    annyang.addCallback('resultNoMatch', error);
                 } else {
                     msg.text = "Vous avez annulé votre virement !";
                     speechSynthesis.speak(msg);
                     $('#response').text("Vous avez annulé votre virement !");
+                    annyang.addCallback('resultNoMatch', error);
                 }
             });
         };
 
         var emprunt = function (montant, mois) {
+            audio.play();
             var res = (montant * 1.05) / mois;
-            msg.text = "Dans votre banque actuelle le taux est de 5%, pour " + mois + " mois vous aurez à payer un montant de res par mois";
+            msg.text = "Dans votre banque actuelle le taux est de 5%, pour " + mois + " mois vous aurez à payer un montant de " + res + " par mois";
             speechSynthesis.speak(msg);
         }
 
+        var cedric = function () {
+            audio.play();
+            msg.text = "Il sort avec Pascal";
+            speechSynthesis.speak(msg);
+        }
 
+        // annyang.trigger(['wally', 'wall-e', 'voili', 'walli']);
+
+        var win = function () {
+            msg.text = "D'après mes prédictions c'est Brest qui va casser la baraque !";
+            speechSynthesis.speak(msg);
+        }
+
+        var modifierCarte = function () {
+            annyang.removeCallback('resultNoMatch');
+            msg.text = "Quelles options de la carte voulez-vous modifier ?";
+            speechSynthesis.speak(msg);
+            var promise = new Promise(function (resolve, reject) {
+                var result = annyang.addCallback('result', function (userSaid) {
+                    console.log("result:" + userSaid[0]);
+                    resolve(userSaid[0]);
+                });
+            });
+            promise.then(function (value) {
+                console.log(value.replace(new RegExp(' ', 'g'), '').toLowerCase());
+                console.log("then");
+                value = value.replace(new RegExp(' ', 'g'), '').toLowerCase();
+                switch (value) {
+                    case 'codepin':
+                        msg.text = 'Quelle est le nouveau code pine ?';
+                        speechSynthesis.speak(msg);
+                        var promise2 = new Promise(function (resolve, reject) {
+                            var result = annyang.addCallback('result', function (userSaid) {
+                                console.log("result:" + userSaid[0]);
+                                resolve(userSaid[0]);
+                            });
+                        });
+                        promise2.then(function (value) {
+                            msg.text = 'Votre nouveau code pine est de ' + value;
+                            speechSynthesis.speak(msg);
+                            annyang.addCallback('resultNoMatch', error);
+                        });
+                        break;
+                    case 'plafond':
+                        msg.text = 'Quelle est le nouveau plafon de votre carte ?';
+                        speechSynthesis.speak(msg);
+                        var promise2 = new Promise(function (resolve, reject) {
+                            var result = annyang.addCallback('result', function (userSaid) {
+                                console.log("result:" + userSaid[0]);
+                                resolve(userSaid[0]);
+                            });
+                        });
+                        promise2.then(function (value) {
+                            msg.text = 'Votre nouveau plafond est maintenant de ' + value + ' €';
+                            speechSynthesis.speak(msg);
+                            annyang.addCallback('resultNoMatch', error);
+                        });
+                        break;
+                    case 'bloquerlacarte':
+                        if (!bloque) {
+                            bloque = true;
+                            msg.text = 'Votre carte à bien été bloqué';
+                            speechSynthesis.speak(msg);
+                        } else {
+                            msg.text = 'Votre carte est déjà bloqué';
+                            speechSynthesis.speak(msg);
+                        }
+                        annyang.addCallback('resultNoMatch', error);
+                        break;
+                    case 'débloquerlacarte':
+                        if (bloque) {
+                            bloque = false;
+                            msg.text = 'Votre carte à bien été débloqué';
+                            speechSynthesis.speak(msg);
+                        }else{
+                            msg.text = 'Votre carte est déjà débloqué';
+                            speechSynthesis.speak(msg);
+                        }
+                        annyang.addCallback('resultNoMatch', error);
+                        break;
+                    default:
+                        msg.text = 'Je n\'ai pas compris la demande de modification de carte. Veuillez réessayer depuis le début.';
+                        speechSynthesis.speak(msg);
+                        annyang.addCallback('resultNoMatch', error);
+                        break;
+                }
+            });
+            // annyang.addCallback('resultNoMatch', error);
+        }
 
         var commands = {
             'wally montre-moi mon solde': showSold,
             'wally faire un virement de :nombre € à :qui': virement,
-            'wally quels sont les mensualités pour un montant de :montant € pour :mois': emprunt,
+            'wally avec qui sort Cédric': cedric,
+            'wally j\'aimerais emprunter :montant € sur :mois mois':  emprunt,
+            'wally j\'aimerais modifier les options de ma carte': modifierCarte,
+            'wally qui va gagner le workshop': win,
         };
+
+        annyang.addCallback('resultNoMatch', error);
 
         var tab = ['Montre-moi *', 'Bonjour'];
 
