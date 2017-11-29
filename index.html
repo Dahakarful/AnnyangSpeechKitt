@@ -50,7 +50,7 @@
             audio.play();
             console.log(nombre);
             console.log(qui);
-            msg.text = "Êtes-vous sûr de faire ce virement ?";
+            msg.text = "Êtes-vous sûr de vouloir faire ce virement ?";
             speechSynthesis.speak(msg);
             var promise = new Promise(function (resolve, reject) {
                 var result = annyang.addCallback('result', function (userSaid) {
@@ -173,7 +173,7 @@
         }
 
         var commands = {
-            'wally montre-moi mon solde': showSold,
+            'wally quelle est mon solde': showSold,
             'wally faire un virement de :nombre € à :qui': virement,
             'wally avec qui sort Cédric': cedric,
             'wally j\'aimerais emprunter :montant € sur :mois mois':  emprunt,
