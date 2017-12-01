@@ -1,218 +1,236 @@
-<link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
+<html lang="fr">
 
-<h2>Vous avez demandé:</h2>
-<font face="Roboto Mono">
-    <span id="skitt-listening-text__recognized-sentence"></span>
-</font>
-<h2>La réponse est:</h2>
-<font face="Roboto Mono">
-    <span id="response"></span>
-</font>
-<script src="//cdnjs.cloudflare.com/ajax/libs/annyang/2.6.0/annyang.min.js"></script>
-<script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
-    crossorigin="anonymous"></script>
-<script src="./speechkitt.js"></script>
+<head>
+    <meta charset="utf8">
+</head>
+</head>
 
-<script>
-    var msg = new SpeechSynthesisUtterance();
-    var voices = window.speechSynthesis.getVoices();
-    msg.voice = voices[2]; // Note: some voices don't support altering params
-    // msg.voice = voices.filter(function(voice) { return voice.name == 'Google FR Male'; })[0];
-    msg.voiceURI = 'native';
-    msg.volume = 1; // 0 to 1
-    msg.rate = 0.8 // 0.1 to 10
-    msg.pitch = 0; //0 to 2
-    msg.lang = 'fr-FR';
-    // msg.text = 'Bonjour, je suis wally, votre assistant bancaire personnelle';
+<body>
+    <!-- <link href="https://fonts.googleapis.com/css?family=Roboto+Mono" rel="stylesheet">
 
-    if (annyang) {
+    <h2>Vous avez demandé:</h2>
+    <font face="Roboto Mono">
+        <span id="skitt-listening-text__recognized-sentence"></span>
+    </font>
+    <h2>La réponse est:</h2>
+    <font face="Roboto Mono">
+        <span id="response"></span>
+    </font> -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.0/annyang.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+        crossorigin="anonymous"></script>
+    <script src="./speechkitt.js"></script>
 
-        annyang.debug(true);
-        annyang.setLanguage("fr-FR");
+    <script>
+        var msg = new SpeechSynthesisUtterance();
+        var voices = window.speechSynthesis.getVoices();
+        msg.voice = voices[2]; // Note: some voices don't support altering params
+        // msg.voice = voices.filter(function(voice) { return voice.name == 'Google FR Male'; })[0];
+        msg.voiceURI = 'native';
+        msg.volume = 1; // 0 to 1
+        msg.rate = 0.8 // 0.1 to 10
+        msg.pitch = 0; //0 to 2
+        msg.lang = 'fr-FR';
+        // msg.text = 'Bonjour, je suis wally, votre assistant bancaire personnelle';
 
-        var audio = new Audio('bip.mp3');
-        var bloque = false;
+        if (annyang) {
+            console.log('Annyang loaded !');
+            // annyang.debug(true);
+            annyang.setLanguage("fr-FR");
 
-        var error = function () {
-            audio.play();
-            msg.text = "Je n'ai pas compris votre demande";
-            speechSynthesis.speak(msg);
-        }
+            var audio = new Audio('bip.mp3');
+            var bloque = false;
 
-        var showSold = function () {
-            audio.play();
-            msg.text = 'Votre solde actuel est de 2556,54 €';
-            speechSynthesis.speak(msg);
-        };
+            var error = function () {
+                annyang.pause();
+                audio.play();
+                msg.text = "Je n'ai pas compris votre demande";
+                speechSynthesis.speak(msg);
+                annyang.resume();
+            }
 
-        var virement = function (nombre, qui) {
-            annyang.removeCallback('resultNoMatch');
-            audio.play();
-            console.log(nombre);
-            console.log(qui);
-            msg.text = "Êtes-vous sûr de vouloir faire ce virement ?";
-            speechSynthesis.speak(msg);
-            var promise = new Promise(function (resolve, reject) {
-                var result = annyang.addCallback('result', function (userSaid) {
-                    console.log("result:" + userSaid[0]);
-                    resolve(userSaid[0]);
+            var showSold = function () {
+                audio.play();
+                var number = Math.floor(Math.random() * 5000) + 1;
+                msg.text = 'Votre solde actuel est de ' + number + ' €';
+                speechSynthesis.speak(msg);
+            };
+
+            var virement = function (nombre, qui) {
+                annyang.removeCallback('resultNoMatch');
+                audio.play();
+                // console.log(nombre);
+                // console.log(qui);
+                msg.text = "Êtes-vous sûr de vouloir faire ce virement ?";
+                speechSynthesis.speak(msg);
+                var promise = new Promise(function (resolve, reject) {
+                    var result = annyang.addCallback('result', function (userSaid) {
+                        // console.log("result:" + userSaid[0]);
+                        resolve(userSaid[0]);
+                    });
                 });
-            });
-            promise.then(function (value) {
-                console.log(value);
-                console.log("then");
-                if (value.trim().toLowerCase() === "oui") {
-                    msg.text = 'Votre virement de ' + nombre + ' € a bien été envoyé à ' + qui;
-                    speechSynthesis.speak(msg);
-                    $('#response').text('Votre virement de ' + nombre + ' € a bien été envoyé à ' + qui);
-                    annyang.addCallback('resultNoMatch', error);
-                } else {
-                    msg.text = "Vous avez annulé votre virement !";
-                    speechSynthesis.speak(msg);
-                    $('#response').text("Vous avez annulé votre virement !");
-                    annyang.addCallback('resultNoMatch', error);
-                }
-            });
-        };
-
-        var emprunt = function (montant, mois) {
-            audio.play();
-            var res = (montant * 1.05) / mois;
-            msg.text = "Dans votre banque actuelle le taux est de 5%, pour " + mois + " mois vous aurez à payer un montant de " + res + " par mois";
-            speechSynthesis.speak(msg);
-        }
-
-        var cedric = function () {
-            audio.play();
-            msg.text = "Il sort avec Pascal";
-            speechSynthesis.speak(msg);
-        }
-
-        // annyang.trigger(['wally', 'wall-e', 'voili', 'walli']);
-
-        var win = function () {
-            msg.text = "D'après mes prédictions c'est Brest qui va casser la baraque !";
-            speechSynthesis.speak(msg);
-        }
-
-        var modifierCarte = function () {
-            annyang.removeCallback('resultNoMatch');
-            msg.text = "Quelles options de la carte voulez-vous modifier ?";
-            speechSynthesis.speak(msg);
-            var promise = new Promise(function (resolve, reject) {
-                var result = annyang.addCallback('result', function (userSaid) {
-                    console.log("result:" + userSaid[0]);
-                    resolve(userSaid[0]);
-                });
-            });
-            promise.then(function (value) {
-                console.log(value.replace(new RegExp(' ', 'g'), '').toLowerCase());
-                console.log("then");
-                value = value.replace(new RegExp(' ', 'g'), '').toLowerCase();
-                switch (value) {
-                    case 'codepin':
-                        msg.text = 'Quelle est le nouveau code pine ?';
+                promise.then(function (value) {
+                    // console.log(value);
+                    // console.log("then");
+                    if (value.trim().toLowerCase() === "oui") {
+                        audio.play();
+                        msg.text = 'Votre virement de ' + nombre + ' € a bien été envoyé à ' + qui;
                         speechSynthesis.speak(msg);
-                        var promise2 = new Promise(function (resolve, reject) {
-                            var result = annyang.addCallback('result', function (userSaid) {
-                                console.log("result:" + userSaid[0]);
-                                resolve(userSaid[0]);
+                        // $('#response').text('Votre virement de ' + nombre + ' € a bien été envoyé à ' + qui);
+                        annyang.addCallback('resultNoMatch', error);
+                    } else {
+                        audio.play();
+                        msg.text = "Vous avez annulé votre virement !";
+                        speechSynthesis.speak(msg);
+                        // $('#response').text("Vous avez annulé votre virement !");
+                        annyang.addCallback('resultNoMatch', error);
+                    }
+                });
+            };
+
+            var emprunt = function (montant, mois) {
+                audio.play();
+                var res = (montant * 1.05) / mois;
+                msg.text = "Dans votre banque actuelle le taux est de 5%, pour " + mois + " mois vous aurez à payer un montant de " + res + " par mois";
+                speechSynthesis.speak(msg);
+            }
+
+            // annyang.trigger(['wally', 'wall-e', 'voili', 'walli']);
+
+            var win = function () {
+                audio.play();
+                msg.text = "D'après mes prédictions c'est Brest qui va casser la baraque !";
+                speechSynthesis.speak(msg);
+            }
+
+            var modifierCarte = function () {
+                annyang.removeCallback('resultNoMatch');
+                audio.play();
+                msg.text = "Quelles options de la carte voulez-vous modifier ?";
+                speechSynthesis.speak(msg);
+                var promise = new Promise(function (resolve, reject) {
+                    var result = annyang.addCallback('result', function (userSaid) {
+                        // console.log("result:" + userSaid[0]);
+                        resolve(userSaid[0]);
+                    });
+                });
+                promise.then(function (value) {
+                    // console.log(value.replace(new RegExp(' ', 'g'), '').toLowerCase());
+                    // console.log("then");
+                    value = value.replace(new RegExp(' ', 'g'), '').toLowerCase();
+                    switch (value) {
+                        case 'codepin':
+                            audio.play();
+                            msg.text = 'Quelle est le nouveau code pine ?';
+                            speechSynthesis.speak(msg);
+                            var promise2 = new Promise(function (resolve, reject) {
+                                var result = annyang.addCallback('result', function (userSaid) {
+                                    // console.log("result:" + userSaid[0]);
+                                    resolve(userSaid[0]);
+                                });
                             });
-                        });
-                        promise2.then(function (value) {
-                            msg.text = 'Votre nouveau code pine est de ' + value;
+                            promise2.then(function (value) {
+                                audio.play();
+                                msg.text = 'Votre nouveau code pine est de ' + value;
+                                speechSynthesis.speak(msg);
+                                annyang.addCallback('resultNoMatch', error);
+                            });
+                            break;
+                        case 'plafond':
+                            audio.play();
+                            msg.text = 'Quelle est le nouveau plafon de votre carte ?';
+                            speechSynthesis.speak(msg);
+                            var promise2 = new Promise(function (resolve, reject) {
+                                var result = annyang.addCallback('result', function (userSaid) {
+                                    // console.log("result:" + userSaid[0]);
+                                    resolve(userSaid[0]);
+                                });
+                            });
+                            promise2.then(function (value) {
+                                audio.play();
+                                msg.text = 'Votre nouveau plafond est maintenant de ' + value;
+                                speechSynthesis.speak(msg);
+                                annyang.addCallback('resultNoMatch', error);
+                            });
+                            break;
+                        case 'bloquerlacarte':
+                            audio.play();
+                            if (!bloque) {
+                                bloque = true;
+                                msg.text = 'Votre carte à bien été bloqué';
+                                speechSynthesis.speak(msg);
+                            } else {
+                                msg.text = 'Votre carte est déjà bloqué';
+                                speechSynthesis.speak(msg);
+                            }
+                            annyang.addCallback('resultNoMatch', error);
+                            break;
+                        case 'débloquerlacarte':
+                            audio.play();
+                            if (bloque) {
+                                bloque = false;
+                                msg.text = 'Votre carte à bien été débloqué';
+                                speechSynthesis.speak(msg);
+                            } else {
+                                msg.text = 'Votre carte est déjà débloqué';
+                                speechSynthesis.speak(msg);
+                            }
+                            annyang.addCallback('resultNoMatch', error);
+                            break;
+                        default:
+                            audio.play();
+                            msg.text = 'Je n\'ai pas compris la demande de modification de carte. Veuillez réessayer depuis le début.';
                             speechSynthesis.speak(msg);
                             annyang.addCallback('resultNoMatch', error);
-                        });
-                        break;
-                    case 'plafond':
-                        msg.text = 'Quelle est le nouveau plafon de votre carte ?';
-                        speechSynthesis.speak(msg);
-                        var promise2 = new Promise(function (resolve, reject) {
-                            var result = annyang.addCallback('result', function (userSaid) {
-                                console.log("result:" + userSaid[0]);
-                                resolve(userSaid[0]);
-                            });
-                        });
-                        promise2.then(function (value) {
-                            msg.text = 'Votre nouveau plafond est maintenant de ' + value + ' €';
-                            speechSynthesis.speak(msg);
-                            annyang.addCallback('resultNoMatch', error);
-                        });
-                        break;
-                    case 'bloquerlacarte':
-                        if (!bloque) {
-                            bloque = true;
-                            msg.text = 'Votre carte à bien été bloqué';
-                            speechSynthesis.speak(msg);
-                        } else {
-                            msg.text = 'Votre carte est déjà bloqué';
-                            speechSynthesis.speak(msg);
-                        }
-                        annyang.addCallback('resultNoMatch', error);
-                        break;
-                    case 'débloquerlacarte':
-                        if (bloque) {
-                            bloque = false;
-                            msg.text = 'Votre carte à bien été débloqué';
-                            speechSynthesis.speak(msg);
-                        }else{
-                            msg.text = 'Votre carte est déjà débloqué';
-                            speechSynthesis.speak(msg);
-                        }
-                        annyang.addCallback('resultNoMatch', error);
-                        break;
-                    default:
-                        msg.text = 'Je n\'ai pas compris la demande de modification de carte. Veuillez réessayer depuis le début.';
-                        speechSynthesis.speak(msg);
-                        annyang.addCallback('resultNoMatch', error);
-                        break;
-                }
+                            break;
+                    }
+                });
+                // annyang.addCallback('resultNoMatch', error);
+            }
+
+            var commands = {
+                'wally quel est mon solde': showSold,
+                'wally faire un virement de :nombre € à :qui': virement,
+                'wally j\'aimerais emprunter :montant € sur :mois mois': emprunt,
+                'wally j\'aimerais modifier les options de ma carte': modifierCarte,
+                'wally qui va gagner le workshop': win,
+            };
+
+            annyang.addCallback('resultNoMatch', error);
+
+            var tab = ['Montre-moi *', 'Bonjour'];
+
+            // Add our commands to annyang
+            annyang.addCommands(commands);
+
+            // Start listening. You can call this here, or attach this call to an event, button, etc.
+            // annyang.start();
+
+            annyang.addCallback('soundstart', function () {
+                console.log('sound detected');
             });
-            // annyang.addCallback('resultNoMatch', error);
+
+            annyang.addCallback('result', function () {
+                console.log('sound stopped');
+            });
+
+            // annyang.start();
+            SpeechKITT.annyang();
+            // SpeechKITT.setStartCommand(annyang.start);
+            SpeechKITT.setToggleLabelText("Comment puis-je vous aider ?");
+            SpeechKITT.setInstructionsText("Allons-y !");
+            // SpeechKITT.displayRecognizedSentence(true);
+            // SpeechKITT.setSampleCommands(tab);
+
+            // Define a stylesheet for KITT to use
+            SpeechKITT.setStylesheet('https://cdnjs.cloudflare.com/ajax/libs/SpeechKITT/0.3.0/themes/flat-concrete.css');
+
+            // Render KITT's interface
+            SpeechKITT.render();
         }
 
-        var commands = {
-            'wally quelle est mon solde': showSold,
-            'wally faire un virement de :nombre € à :qui': virement,
-            'wally avec qui sort Cédric': cedric,
-            'wally j\'aimerais emprunter :montant € sur :mois mois':  emprunt,
-            'wally j\'aimerais modifier les options de ma carte': modifierCarte,
-            'wally qui va gagner le workshop': win,
-        };
+        // speechSynthesis.speak(msg);
+    </script>
+</body>
 
-        annyang.addCallback('resultNoMatch', error);
-
-        var tab = ['Montre-moi *', 'Bonjour'];
-
-        // Add our commands to annyang
-        annyang.addCommands(commands);
-
-        // Start listening. You can call this here, or attach this call to an event, button, etc.
-        // annyang.start();
-
-        annyang.addCallback('soundstart', function () {
-            console.log('sound detected');
-        });
-
-        annyang.addCallback('result', function () {
-            console.log('sound stopped');
-        });
-
-        annyang.start();
-        SpeechKITT.annyang();
-        SpeechKITT.setStartCommand(annyang.start);
-        SpeechKITT.setToggleLabelText("Comment puis-je vous aider ?");
-        SpeechKITT.setInstructionsText("OK !");
-        SpeechKITT.displayRecognizedSentence(true);
-        // SpeechKITT.setSampleCommands(tab);
-
-        // Define a stylesheet for KITT to use
-        SpeechKITT.setStylesheet('//cdnjs.cloudflare.com/ajax/libs/SpeechKITT/0.3.0/themes/flat-concrete.css');
-
-        // Render KITT's interface
-        SpeechKITT.vroom();
-    }
-
-    speechSynthesis.speak(msg);
-</script>
+</html>
